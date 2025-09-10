@@ -8,11 +8,16 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 
+# Set creds
+TCG_PLAYER_URL = "https://www.tcgplayer.com"
+USERNAME = "<YOUR_EMAIL_HERE>"
+PASSWORD = "<YOUR_PASSWORD_HERE>"
+
 def setup_driver():
-    """Set up the Selenium WebDriver."""
+    """Set up the Selenium WebDriver"""
     chrome_options = Options()
-    # chrome_options.add_argument("--headless") 
-    # chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--headless") 
+    chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--window-size=1920,1080")
     
@@ -20,21 +25,13 @@ def setup_driver():
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-def scrape_website(url):
-    """Scrape data from the given URL."""
+def main(url):
+    
     driver = setup_driver()
     try:
         driver.get(url)
 
-        element = WebDriverWait(driver, 60).until(
-            EC.presence_of_element_located((By.XPATH, "//*[@id='profile-menu-btn']/span"))
-        )
-        element.click()
-        
-        login_button = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, "//*[@id='user-profile-menu']/div/div[2]/span[2]/a[1]"))
-        )
-        login_button.click()
+        login_user(driver)
 
     except Exception as e:
         print("Error:", e)
@@ -42,6 +39,33 @@ def scrape_website(url):
     finally:
         driver.quit()
 
+def login_user(driver: webdriver.Chrome):
+
+    element = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.XPATH, "//*[@id='profile-menu-btn']/span"))
+    )
+    element.click()
+
+    login_button = WebDriverWait(driver, 5).until(
+        EC.presence_of_element_located((By.XPATH, "//*[@id='user-profile-menu']/div/div[2]/span[2]/a[1]"))
+    )
+    login_button.click()
+
+    username_field = WebDriverWait(driver, 5).until(
+        EC.element_to_be_clickable((By.NAME, "Email"))
+    )
+    username_field.send_keys(USERNAME)
+
+    password_field = WebDriverWait(driver, 2).until(
+        EC.element_to_be_clickable((By.NAME, "Password"))
+    )
+    
+    password_field.send_keys(PASSWORD)
+
+    login_button = driver.find_element(By.XPATH, "//*[@id='signInForm']/button/span")
+    login_button.click()
+    time.sleep(30)  # Wait for login to complete
+    print("Logged in successfully")
+
 if __name__ == "__main__":
-    target_url = "https://www.tcgplayer.com"
-    scrape_website(target_url)
+    main(TCG_PLAYER_URL)
